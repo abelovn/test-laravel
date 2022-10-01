@@ -1,0 +1,14 @@
+---
+- name: Install PHP
+  hosts: all
+  tasks:
+  
+  
+    - name: Install PHP 
+      apt: name={{ item }} update_cache=yes state=latest
+      loop: [ 'php-fpm', 'php-mysql' ]
+    
+    - name: Install PHP Extensions
+      apt: name={{ item }} update_cache=yes state=latest
+      #loop: "{{ php_packages }}"
+      loop: [ 'php-mbstring','php-bcmath','php-xml' ]

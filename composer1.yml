@@ -1,0 +1,47 @@
+---
+- name:
+  hosts: all
+  vars:
+    composer_path: /usr/local/bin/composer
+  tasks:
+  
+    # - name: Download Composer Installation Script 
+      # get_url:
+        # url: https://getcomposer.org/installer | php -- --1
+        # dest: /tmp/composer-setup.php
+        
+        
+    - name: Download Composer Installation Script 
+      shell: curl -sS https://getcomposer.org/installer | php -- --2
+      args:
+        chdir: /tmp
+        creates: /tmp/composer-setup.php  
+        warn: false        
+        
+    
+    
+     # - name: run composer installer 
+       # command:
+         # cmd: /usr/bin/php /tmp/composer-setup.php
+         # cmd: /usr/bin/php /tmp/composer.phar
+         # creates: composer.phar
+    
+    - name: Copy Composer Executable to /usr/local/bin
+      become: true
+      copy:
+        src: /tmp/composer.phar
+        dest: /usr/local/bin/composer
+        remote_src: yes
+        mode: '0755'
+    
+    - name: Remove phar
+      file:
+        path: composer.phar
+        state: absent
+    
+    - name: Remove Install Script
+      file:
+        path: /tmp/composer-setup.php
+        state: absent
+    
+      

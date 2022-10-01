@@ -1,0 +1,73 @@
+---
+- name: setup
+  hosts: all
+  vars:
+    - copy_local_key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+    - sys_packages: [ 'curl', 'vim', 'git', 'ufw']
+    - upassword: password  
+    - user: ubuntu
+  tasks:
+  
+    - name: Install Prerequisites
+      apt: name=aptitude update_cache=yes state=latest force_apt_get=yes
+    
+    - name: Creating user "{{ user }}" 
+      user: 
+        name: "{{ user }}"
+        password: "{{ upassword | password_hash('sha512') }}"
+        state: present
+        create_home: true
+        shell: /bin/bash
+    
+    
+    - name: Allow ubuntu to have passwordless sudo
+      lineinfile:
+        path: /etc/sudoers.d/ubuntu
+        state: present
+        create: yes
+        line: 'ubuntu ALL=(ALL) NOPASSWD:ALL'
+        validate: '/usr/sbin/visudo -cf %s'
+    
+    # - name: Set authorized key for remote user
+      # authorized_key:
+        # user: "{{ user }}"
+        # state: present
+        # key: "{{ copy_local_key }}"
+    
+    # - name: Disable password authentication for root
+      # lineinfile:
+        # path: /etc/ssh/sshd_config
+        # state: present
+        # regexp: '^#?PermitRootLogin'
+        # line: 'PermitRootLogin prohibit-password'
+    
+    # Install Packages
+    - name: Update apt
+      apt: update_cache=yes
+    
+    - name: Install required system packages
+      apt: name={{ sys_packages }} state=latest
+    
+    # UFW Setup
+    - name: UFW - Allow SSH connections
+      ufw:
+        rule: allow
+        name: OpenSSH
+
+    - name: Allow all access to tcp port 80
+      community.general.ufw:
+        rule: allow
+        port: '80'
+        proto: tcp
+    
+    - name: Allow all access to tcp port 80
+      community.general.ufw:
+        rule: allow
+        port: '443'
+        proto: tcp
+    
+    - name: UFW - Deny all other incoming traffic by default
+      ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
